@@ -1,13 +1,14 @@
+# main.py
 
 import os
 from src.data.loader import load_raw_data
 from src.data.cleaner import clean_data, save_processed
 from src.data.eda import run_eda
+from src.features.engineer import build_features, save_features  # ← ADD
 
-# --- File paths ---
-# Using os.path.join keeps this cross-platform (works on Windows, Mac, Linux)
 RAW_DATA_PATH = os.path.join("data", "raw", "superstore.csv")
 PROCESSED_DATA_PATH = os.path.join("data", "processed", "daily_sales.csv")
+FEATURES_DATA_PATH = os.path.join("data", "processed", "features.csv")  # ← ADD
 
 def main():
     print("FUTURE_ML_01 — Sales Forecasting System")
@@ -25,6 +26,10 @@ def main():
 
     # --- Stage 4: EDA ---
     run_eda(clean_df)
+
+    # --- Stage 5: Feature Engineering ---  
+    features_df = build_features(clean_df)  
+    save_features(features_df, FEATURES_DATA_PATH) 
 
 if __name__ == "__main__":
     main()
