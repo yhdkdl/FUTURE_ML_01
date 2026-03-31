@@ -1,5 +1,6 @@
 
 
+import os
 import pandas as pd
 
 def clean_data(df: pd.DataFrame) -> pd.DataFrame:
@@ -62,32 +63,44 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df["profit"] = df["profit"].astype(float)
     df["quantity"] = df["quantity"].astype(int)
 
-    # --- Step 6: Aggregate to daily total sales ---
-    daily_sales = (
-        df.groupby("order_date")
+    # --- Step 6: Aggregate to WEEKLY total sales ---
+    # Daily retail data is too noisy for reliable forecasting.
+    # Weekly aggregation smooths variance and matches how real
+    # businesses actually plan (by week, not by day).
+    # W-MON = week ending Monday, giving us clean 7-day buckets.
+    df = df.set_index("order_date")
+
+    weekly_sales = (
+        df.resample("W-MON")   # group into weekly buckets ending Monday
         .agg(
-            total_sales=("sales", "sum"),       # sum all sales for that day
-            total_profit=("profit", "sum"),     # sum all profit for that day
-            num_orders=("order_id", "nunique"), # count unique orders
-            num_items=("quantity", "sum")       # total items sold
+            total_sales=("sales", "sum"),
+            total_profit=("profit", "sum"),
+            num_orders=("order_id", "nunique"),
+            num_items=("quantity", "sum")
         )
-        .reset_index()  # turn order_date back into a column (not an index)
-        .sort_values("order_date")  # ensure chronological order
+        .reset_index()
+        .rename(columns={"order_date": "week_start"})
+        .sort_values("week_start")
     )
 
-    print(f"[cleaner] Aggregated to {len(daily_sales)} daily records")
-    print(f"[cleaner] Columns in clean data: {list(daily_sales.columns)}")
+    # Drop any weeks with zero sales entirely
+    # These are incomplete boundary weeks at dataset edges
+    weekly_sales = weekly_sales[weekly_sales["total_sales"] > 0].reset_index(drop=True)
 
-    return daily_sales
+    print(f"[cleaner] Aggregated to {len(weekly_sales)} weekly records")
+    print(f"[cleaner] Columns in clean data: {list(weekly_sales.columns)}")
+
+    return weekly_sales
 
 
 def save_processed(df: pd.DataFrame, filepath: str) -> None:
     """
-    Saves the cleaned DataFrame to the processed data folder.
+    Saves the cleaned weekly data to disk.
 
     Args:
-        df: cleaned DataFrame
-        filepath: destination path
+        df: cleaned weekly DataFrame
+        filepath: output CSV path
     """
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     df.to_csv(filepath, index=False)
-    print(f"\n[cleaner] Saved processed data to: {filepath}")
+    print(f"[cleaner] Saved processed data to: {filepath}")
