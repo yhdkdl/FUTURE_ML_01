@@ -1,5 +1,3 @@
-# src/models/trainer.py
-
 import pandas as pd
 import numpy as np
 import joblib
@@ -32,16 +30,14 @@ def split_data(df: pd.DataFrame, test_weeks_per_year: int = 10):
 
     df = df.copy()
 
-    # For each year, find the last N week numbers
-    # These become our test set — one block per year
+   
     test_mask = df.groupby("year")["week_of_year"].transform(
         lambda weeks: weeks >= weeks.quantile(1 - test_weeks_per_year / 52)
     )
 
-    train = df[~test_mask].reset_index(drop=True)  # everything NOT in test
-    test  = df[test_mask].reset_index(drop=True)   # the held-out weeks
+    train = df[~test_mask].reset_index(drop=True)  
+    test  = df[test_mask].reset_index(drop=True)   
 
-    # split_date = earliest date in the test set (for visualization reference)
     split_date = test["week_start"].min()
 
     X_train = train[FEATURE_COLUMNS]
@@ -64,9 +60,9 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series) -> RandomForestRegres
     print("\n[trainer] Training Random Forest model...")
 
     model = RandomForestRegressor(
-        n_estimators=300,    # more trees for weekly data stability
-        max_depth=8,         # slightly shallower — weekly data is less noisy
-        min_samples_leaf=3,  # weekly dataset is smaller so lower minimum
+        n_estimators=300,    
+        max_depth=8,        
+        min_samples_leaf=3, 
         random_state=42,
         n_jobs=-1
     )
