@@ -24,7 +24,6 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
 
     print("\n[cleaner] Starting cleaning pipeline...")
 
-    # --- Step 1: Standardize column names ---
     df.columns = (
         df.columns
         .str.strip()
@@ -38,40 +37,34 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
     df["ship_date"] = pd.to_datetime(df["ship_date"], dayfirst=False)
     print(f"[cleaner] Date range: {df['order_date'].min()} to {df['order_date'].max()}")
 
-    # --- Step 3: Drop exact duplicate rows ---
+
     before = len(df)
     df = df.drop_duplicates()
     after = len(df)
     print(f"[cleaner] Dropped {before - after} duplicate rows")
 
-    # --- Step 4: Handle missing values ---
     missing = df.isnull().sum()
-    missing = missing[missing > 0]  # only show columns that have nulls
+    missing = missing[missing > 0] 
     if len(missing) > 0:
         print(f"[cleaner] Missing values found:\n{missing}")
-        # Drop rows where sales is null — we can't forecast without a target value
+      
         df = df.dropna(subset=["sales"])
-        # Fill any remaining nulls in text columns with "Unknown"
+     
         text_cols = df.select_dtypes(include="object").columns
         df[text_cols] = df[text_cols].fillna("Unknown")
     else:
         print("[cleaner] No missing values found")
 
-    # --- Step 5: Ensure correct data types ---
-    # Sales and profit must be floats for math operations
+
     df["sales"] = df["sales"].astype(float)
     df["profit"] = df["profit"].astype(float)
     df["quantity"] = df["quantity"].astype(int)
 
-    # --- Step 6: Aggregate to WEEKLY total sales ---
-    # Daily retail data is too noisy for reliable forecasting.
-    # Weekly aggregation smooths variance and matches how real
-    # businesses actually plan (by week, not by day).
-    # W-MON = week ending Monday, giving us clean 7-day buckets.
+  
     df = df.set_index("order_date")
 
     weekly_sales = (
-        df.resample("W-MON")   # group into weekly buckets ending Monday
+        df.resample("W-MON")  
         .agg(
             total_sales=("sales", "sum"),
             total_profit=("profit", "sum"),
@@ -83,8 +76,7 @@ def clean_data(df: pd.DataFrame) -> pd.DataFrame:
         .sort_values("week_start")
     )
 
-    # Drop any weeks with zero sales entirely
-    # These are incomplete boundary weeks at dataset edges
+ 
     weekly_sales = weekly_sales[weekly_sales["total_sales"] > 0].reset_index(drop=True)
 
     print(f"[cleaner] Aggregated to {len(weekly_sales)} weekly records")
