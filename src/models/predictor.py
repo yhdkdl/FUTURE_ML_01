@@ -1,5 +1,3 @@
-# src/models/predictor.py
-# Generates future weekly sales forecasts via recursive prediction.
 
 import pandas as pd
 import numpy as np
@@ -21,7 +19,7 @@ def generate_future_weeks(last_date: pd.Timestamp, weeks: int = 12) -> pd.DataFr
     future_dates = pd.date_range(
         start=last_date + pd.Timedelta(weeks=1),
         periods=weeks,
-        freq="W-MON"  # match the same weekly frequency as our training data
+        freq="W-MON"  
     )
 
     future_df = pd.DataFrame({"week_start": future_dates})
@@ -32,7 +30,7 @@ def generate_future_weeks(last_date: pd.Timestamp, weeks: int = 12) -> pd.DataFr
     future_df["week_of_year"] = future_df["week_start"].dt.isocalendar().week.astype(int)
     future_df["day_of_month"] = future_df["week_start"].dt.day
 
-    # year_index must be relative to training data start year (2014)
+
     future_df["year_index"]   = future_df["year"] - 2014
 
     future_df["is_q4"]          = (future_df["quarter"] == 4).astype(int)
@@ -62,8 +60,7 @@ def generate_forecast(
 
     print(f"\n[predictor] Generating {weeks}-week forecast...")
 
-    # Full history of known sales values
-    # We'll keep appending predictions to this as we go
+   
     known_sales = list(historical_df["total_sales"].values)
 
     last_date = historical_df["week_start"].max()
@@ -73,7 +70,6 @@ def generate_forecast(
 
     for i in range(weeks):
 
-        # Lag features — look back into known_sales
         lag_1  = known_sales[-1]  if len(known_sales) >= 1  else 0
         lag_2  = known_sales[-2]  if len(known_sales) >= 2  else 0
         lag_4  = known_sales[-4]  if len(known_sales) >= 4  else 0
@@ -105,10 +101,10 @@ def generate_forecast(
         }])
 
         pred = model.predict(feature_row)[0]
-        pred = max(0, pred)  # no negative sales
+        pred = max(0, pred)  
 
         predictions.append(pred)
-        known_sales.append(pred)  # feed prediction into next iteration
+        known_sales.append(pred) 
 
     future_df["predicted_sales"] = np.round(predictions, 2)
 
