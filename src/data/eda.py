@@ -1,5 +1,4 @@
-# src/data/eda.py
-# Exploratory Data Analysis on weekly aggregated sales data.
+
 
 import pandas as pd
 
