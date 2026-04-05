@@ -23,34 +23,20 @@ def evaluate_model(model, X_test: pd.DataFrame, y_test: pd.Series) -> dict:
 
     print("\n[evaluator] Running model evaluation...")
 
-    # Generate predictions on the test set
-    # These are the model's "guesses" for the test period
+
     predictions = model.predict(X_test)
 
-    # --- MAE: Mean Absolute Error ---
-    # Average absolute difference between predicted and actual
-    # Easiest metric to explain to a non-technical person
-    # "On average, our forecast is off by $X per day"
+  
     mae = mean_absolute_error(y_test, predictions)
 
-    # --- RMSE: Root Mean Squared Error ---
-    # Like MAE but squares errors first, then square roots the average
-    # Penalizes large errors more heavily than MAE
-    # Useful when big errors are especially costly to the business
     rmse = np.sqrt(mean_squared_error(y_test, predictions))
 
-  # --- MAPE: Mean Absolute Percentage Error ---
-    # We skip weeks where actual sales = 0 to avoid division by zero.
-    # This gives a true percentage error on weeks with real activity.
     actual   = y_test.values
-    nonzero  = actual != 0          # boolean mask of valid weeks
+    nonzero  = actual != 0         
     mape = np.mean(
         np.abs((actual[nonzero] - predictions[nonzero]) / actual[nonzero])
     ) * 100
-    # --- R² Score ---
-    # Measures how much of the sales variance our model explains
-    # 1.0 = perfect, 0.0 = no better than predicting the mean every day
-    # Negative = worse than predicting the mean (very bad)
+
     r2 = r2_score(y_test, predictions)
 
     metrics = {
@@ -121,7 +107,7 @@ def get_feature_importance(model, feature_columns: list) -> pd.DataFrame:
         "importance": model.feature_importances_
     })
 
-    # Sort descending so most important features are at the top
+   
     importance_df = (
         importance_df
         .sort_values("importance", ascending=False)
