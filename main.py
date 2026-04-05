@@ -1,5 +1,3 @@
-# main.py
-# Central pipeline — one clean pass, no duplicate stages.
 
 import os
 import pandas as pd
@@ -30,39 +28,38 @@ def main():
     print("FUTURE_ML_01 — Sales Forecasting System")
     print("="*50)
 
-    # Stage 1: Load
+
     raw_df = load_raw_data(RAW_DATA_PATH)
 
-    # Stage 2: Clean + aggregate to weekly
+
     clean_df = clean_data(raw_df)
     os.makedirs(os.path.dirname(PROCESSED_DATA_PATH), exist_ok=True)
     save_processed(clean_df, PROCESSED_DATA_PATH)
 
-    # Stage 3: EDA
+  
     run_eda(clean_df)
 
-    # Stage 4: Feature engineering
+  
     features_df = build_features(clean_df)
     save_features(features_df, FEATURES_DATA_PATH)
 
-    # Stage 5: Train/test split
     X_train, X_test, y_train, y_test, split_date = split_data(features_df)
 
-    # Stage 6: Train
+
     model = train_model(X_train, y_train)
     save_model(model, MODEL_PATH)
 
-    # Stage 7: Evaluate
+   
     metrics, predictions = evaluate_model(model, X_test, y_test)
     print_evaluation_report(metrics, y_test)
     get_feature_importance(model, FEATURE_COLUMNS)
 
-    # Stage 8: Forecast 12 weeks ahead
+   
     forecast_df = generate_forecast(model, features_df, weeks=12)
     forecast_df.to_csv(FORECAST_PATH, index=False)
     print(f"\n[main] Forecast saved to: {FORECAST_PATH}")
     print("\n[main] ✓ Pipeline complete")
- # Stage 9: Visualizations                                         
+                                        
     print("\n[main] Generating charts...")                            
     chart_sales_history(features_df, CHARTS_DIR)                     
     chart_forecast(features_df, forecast_df, CHARTS_DIR)             
